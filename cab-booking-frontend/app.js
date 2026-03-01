@@ -13,6 +13,7 @@ if (token) {
         loadRideHistory();
         loadPaymentHistory();
         loadEcoScore();
+        loadAvailableDrivers();
         startAutoRefresh();
     } else if (userRole === 'DRIVER') {
         loadDriverRides();
@@ -133,6 +134,7 @@ async function login(e) {
                 loadRideHistory();
                 loadPaymentHistory();
                 loadEcoScore();
+                loadAvailableDrivers();
                 startAutoRefresh();
             } else if (userRole === 'DRIVER') {
                 loadDriverRides();
@@ -249,7 +251,36 @@ async function loadRideHistory(filterStatus = '') {
                 rides = rides.filter(r => r.ride_status === filterStatus);
             }
             
-            list.innerHTML = rides.map(ride => `
+            list.innerHTML = await Promise.all(rides.map(async ride => {
+                let ratingInfo = '';
+                if (ride.ride_status === 'COMPLETED') {
+                    const ratingRes = await fetch(`${API_URL}/api/ratings/ride/${ride.ride_id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const ratingData = await ratingRes.json();
+                    if (ratingData.success && ratingData.data.rated) {
+                        // Show driver rating (what driver received from passenger)
+                        if (ratingData.data.passenger_rating) {
+                            ratingInfo += `
+                                <div style="background: #e8f5e9; padding: 0.5rem; margin-top: 0.5rem; border-radius: 5px;">
+                                    <p style="margin: 0.2rem 0;"><strong>You rated driver:</strong> ${ratingData.data.passenger_rating} ★</p>
+                                    ${ratingData.data.passenger_comment ? `<p style="margin: 0.2rem 0; font-size: 0.9rem; color: #666;"><em>"${ratingData.data.passenger_comment}"</em></p>` : ''}
+                                </div>
+                            `;
+                        }
+                        // Show passenger rating (what passenger received from driver)
+                        if (ratingData.data.driver_rating) {
+                            ratingInfo += `
+                                <div style="background: #fff3e0; padding: 0.5rem; margin-top: 0.5rem; border-radius: 5px;">
+                                    <p style="margin: 0.2rem 0;"><strong>Driver rated you:</strong> ${ratingData.data.driver_rating} ★</p>
+                                    ${ratingData.data.driver_comment ? `<p style="margin: 0.2rem 0; font-size: 0.9rem; color: #666;"><em>"${ratingData.data.driver_comment}"</em></p>` : ''}
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                return `
                 <div class="ride-card">
                     <h4>Ride #${ride.ride_id}</h4>
                     <p><strong>From:</strong> ${ride.pickup_location}</p>
@@ -258,10 +289,12 @@ async function loadRideHistory(filterStatus = '') {
                     <p><strong>Fare:</strong> ₹${ride.fare}</p>
                     <p><strong>Status:</strong> <span class="status-badge status-${ride.ride_status}">${ride.ride_status}</span></p>
                     <p><strong>Date:</strong> ${new Date(ride.created_at).toLocaleString()}</p>
+                    ${ratingInfo}
                     ${ride.ride_status === 'REQUESTED' ? `<button onclick="cancelRide(${ride.ride_id})" class="cancel-btn">Cancel Ride</button>` : ''}
-                    ${ride.ride_status === 'COMPLETED' ? `<button onclick="openRatingModal(${ride.ride_id})">Rate Driver</button>` : ''}
+                    ${ride.ride_status === 'COMPLETED' && (!ratingInfo || !ratingInfo.includes('You rated driver')) ? `<button onclick="openRatingModal(${ride.ride_id})">Rate Driver</button>` : ''}
                 </div>
-            `).join('');
+                `;
+            })).then(cards => cards.join(''));
         } else {
             list.innerHTML = '<div class="empty-state">No rides yet. Book your first ride!</div>';
         }
@@ -348,6 +381,7 @@ async function loadDriverVehicle() {
                 <p><strong>Vehicle:</strong> ${profile.vehicle_number || 'Not registered'}</p>
                 <p><strong>Type:</strong> ${profile.vehicle_type || 'N/A'}</p>
                 <p><strong>License:</strong> ${profile.license_number}</p>
+                <p><strong>Rating:</strong> ${profile.rating ? profile.rating.toFixed(1) : '0.0'} ★ (${profile.total_ratings || 0} ratings)</p>
             `;
         }
     } catch (err) {
@@ -382,7 +416,36 @@ async function loadDriverRides() {
         const list = document.getElementById('driverRidesList');
         
         if (result.success && result.data.rides.length > 0) {
-            list.innerHTML = result.data.rides.map(ride => `
+            list.innerHTML = await Promise.all(result.data.rides.map(async ride => {
+                let ratingInfo = '';
+                if (ride.ride_status === 'COMPLETED') {
+                    const ratingRes = await fetch(`${API_URL}/api/ratings/ride/${ride.ride_id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const ratingData = await ratingRes.json();
+                    if (ratingData.success && ratingData.data.rated) {
+                        // Show passenger rating (what passenger received from driver)
+                        if (ratingData.data.driver_rating) {
+                            ratingInfo += `
+                                <div style="background: #e8f5e9; padding: 0.5rem; margin-top: 0.5rem; border-radius: 5px;">
+                                    <p style="margin: 0.2rem 0;"><strong>You rated passenger:</strong> ${ratingData.data.driver_rating} ★</p>
+                                    ${ratingData.data.driver_comment ? `<p style="margin: 0.2rem 0; font-size: 0.9rem; color: #666;"><em>"${ratingData.data.driver_comment}"</em></p>` : ''}
+                                </div>
+                            `;
+                        }
+                        // Show driver rating (what driver received from passenger)
+                        if (ratingData.data.passenger_rating) {
+                            ratingInfo += `
+                                <div style="background: #fff3e0; padding: 0.5rem; margin-top: 0.5rem; border-radius: 5px;">
+                                    <p style="margin: 0.2rem 0;"><strong>Passenger rated you:</strong> ${ratingData.data.passenger_rating} ★</p>
+                                    ${ratingData.data.passenger_comment ? `<p style="margin: 0.2rem 0; font-size: 0.9rem; color: #666;"><em>"${ratingData.data.passenger_comment}"</em></p>` : ''}
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
+                return `
                 <div class="ride-card">
                     <h4>Ride #${ride.ride_id} - ${ride.passenger_name}</h4>
                     <p><strong>From:</strong> ${ride.pickup_location}</p>
@@ -390,10 +453,12 @@ async function loadDriverRides() {
                     <p><strong>Distance:</strong> ${ride.distance} km</p>
                     <p><strong>Fare:</strong> ₹${ride.fare}</p>
                     <p><strong>Status:</strong> <span class="status-badge status-${ride.ride_status}">${ride.ride_status}</span></p>
+                    ${ratingInfo}
                     ${ride.ride_status === 'ACCEPTED' ? `<button onclick="completeRide(${ride.ride_id})">Complete Ride</button>` : ''}
-                    ${ride.ride_status === 'COMPLETED' ? `<button onclick="openRatingModal(${ride.ride_id})">Rate Passenger</button>` : ''}
+                    ${ride.ride_status === 'COMPLETED' && (!ratingInfo || !ratingInfo.includes('You rated passenger')) ? `<button onclick="openRatingModal(${ride.ride_id})">Rate Passenger</button>` : ''}
                 </div>
-            `).join('');
+                `;
+            })).then(cards => cards.join(''));
         } else {
             list.innerHTML = '<div class="empty-state">No rides accepted yet.</div>';
         }
@@ -548,12 +613,31 @@ async function submitRating() {
             showToast('Rating submitted successfully');
             closeRatingModal();
             if (userRole === 'PASSENGER') loadRideHistory();
-            else loadDriverRides();
+            else if (userRole === 'DRIVER') {
+                loadDriverRides();
+                loadDriverVehicle();
+            }
         } else {
             showToast(result.error || 'Failed to submit rating');
         }
     } catch (err) {
         showToast('Network error. Failed to submit rating.');
+    }
+}
+
+async function loadAvailableDrivers() {
+    try {
+        const res = await fetch(`${API_URL}/api/drivers/available`);
+        const result = await res.json();
+        const list = document.getElementById('availableDriversList');
+        
+        if (result.success && result.data.drivers.length > 0) {
+            list.innerHTML = `<p style="color: #27ae60; font-weight: bold; font-size: 1.1rem;">${result.data.drivers.length} drivers available now</p>`;
+        } else {
+            list.innerHTML = '<p style="color: #e74c3c;">No drivers available at the moment</p>';
+        }
+    } catch (err) {
+        console.error('Failed to load available drivers:', err);
     }
 }
 

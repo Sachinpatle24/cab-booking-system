@@ -8,6 +8,33 @@ rating_bp = Blueprint("ratings", __name__)
 @rating_bp.route("/ride/<int:ride_id>", methods=["POST"])
 @jwt_required()
 def rate_ride(ride_id):
+    """
+    Rate a ride
+    ---
+    tags:
+      - Ratings
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: ride_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            comment:
+              type: string
+    responses:
+      200:
+        description: Rating submitted
+    """
     user_id = int(get_jwt_identity())
     data = request.get_json()
     
@@ -102,6 +129,22 @@ def rate_ride(ride_id):
 @rating_bp.route("/ride/<int:ride_id>", methods=["GET"])
 @jwt_required()
 def get_ride_rating(ride_id):
+    """
+    Get ride rating
+    ---
+    tags:
+      - Ratings
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: ride_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Rating retrieved
+    """
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""

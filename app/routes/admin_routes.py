@@ -14,6 +14,17 @@ def is_admin(user_id):
 @admin_bp.route("/stats", methods=["GET"])
 @jwt_required()
 def get_stats():
+    """
+    Get admin statistics
+    ---
+    tags:
+      - Admin
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Statistics retrieved
+    """
     user_id = get_jwt_identity()
     if not is_admin(user_id):
         return error_response("Admin access required", 403)
@@ -52,6 +63,17 @@ def get_stats():
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required()
 def get_all_users():
+    """
+    Get all users
+    ---
+    tags:
+      - Admin
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Users retrieved
+    """
     user_id = get_jwt_identity()
     if not is_admin(user_id):
         return error_response("Admin access required", 403)
@@ -81,6 +103,17 @@ def get_all_users():
 @admin_bp.route("/rides", methods=["GET"])
 @jwt_required()
 def get_all_rides():
+    """
+    Get all rides
+    ---
+    tags:
+      - Admin
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Rides retrieved
+    """
     user_id = get_jwt_identity()
     if not is_admin(user_id):
         return error_response("Admin access required", 403)

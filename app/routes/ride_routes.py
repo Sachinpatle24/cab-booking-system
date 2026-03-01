@@ -10,7 +10,36 @@ ride_bp = Blueprint("rides", __name__)
 @ride_bp.route("/request", methods=["POST"])
 @jwt_required()
 def request_ride_route():
-    """Request a new ride"""
+    """
+    Request a new ride
+    ---
+    tags:
+      - Rides
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            pickup_location:
+              type: string
+              example: Location A
+            drop_location:
+              type: string
+              example: Location B
+            distance:
+              type: number
+              example: 10.5
+            eco_mode_enabled:
+              type: boolean
+              example: true
+    responses:
+      201:
+        description: Ride requested successfully
+    """
     user_id = int(get_jwt_identity())
     
     # Check if user has pending ride
@@ -30,7 +59,15 @@ def request_ride_route():
 
 @ride_bp.route("/pending", methods=["GET"])
 def get_pending_rides():
-    """Get all pending rides for drivers"""
+    """
+    Get all pending rides
+    ---
+    tags:
+      - Rides
+    responses:
+      200:
+        description: List of pending rides
+    """
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
@@ -63,7 +100,22 @@ def get_pending_rides():
 @ride_bp.route("/<int:ride_id>/accept", methods=["PATCH"])
 @jwt_required()
 def accept_ride_route(ride_id):
-    """Accept a ride (Driver only)"""
+    """
+    Accept a ride
+    ---
+    tags:
+      - Rides
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: ride_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Ride accepted successfully
+    """
     user_id = int(get_jwt_identity())
     
     # Check if driver has active ride
@@ -86,12 +138,42 @@ def accept_ride_route(ride_id):
 @ride_bp.route("/<int:ride_id>/complete", methods=["PATCH"])
 @jwt_required()
 def complete_ride_route(ride_id):
-    """Complete a ride"""
+    """
+    Complete a ride
+    ---
+    tags:
+      - Rides
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: ride_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Ride completed successfully
+    """
     return complete_ride(ride_id)
 
 @ride_bp.route("/<int:ride_id>/cancel", methods=["PATCH"])
 @jwt_required()
 def cancel_ride_route(ride_id):
-    """Cancel a ride"""
+    """
+    Cancel a ride
+    ---
+    tags:
+      - Rides
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: ride_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Ride cancelled successfully
+    """
     user_id = get_jwt_identity()
     return cancel_ride(user_id, ride_id)

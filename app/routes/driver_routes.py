@@ -10,7 +10,26 @@ logger = setup_logger(__name__)
 @driver_bp.route("/status", methods=["PATCH"])
 @jwt_required()
 def update_status():
-    """Update driver availability status"""
+    """
+    Update driver status
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [AVAILABLE, BUSY, OFFLINE]
+    responses:
+      200:
+        description: Status updated
+    """
     try:
         user_id = get_jwt_identity()
         status = request.json.get('status', '').upper()
@@ -39,7 +58,17 @@ def update_status():
 @driver_bp.route("/rides", methods=["GET"])
 @jwt_required()
 def get_driver_rides():
-    """Get driver's accepted rides"""
+    """
+    Get driver's rides
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Driver rides retrieved
+    """
     try:
         user_id = get_jwt_identity()
         
@@ -83,7 +112,17 @@ def get_driver_rides():
 @driver_bp.route("/earnings", methods=["GET"])
 @jwt_required()
 def get_driver_earnings():
-    """Get driver's total earnings"""
+    """
+    Get driver's earnings
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Earnings retrieved
+    """
     try:
         user_id = get_jwt_identity()
         
@@ -115,7 +154,15 @@ def get_driver_earnings():
 
 @driver_bp.route("/available", methods=["GET"])
 def get_available_drivers():
-    """Get all available drivers"""
+    """
+    Get available drivers
+    ---
+    tags:
+      - Drivers
+    responses:
+      200:
+        description: Available drivers retrieved
+    """
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
@@ -144,14 +191,24 @@ def get_available_drivers():
 @driver_bp.route("/profile", methods=["GET"])
 @jwt_required()
 def get_driver_profile():
-    """Get driver profile"""
+    """
+    Get driver profile
+    ---
+    tags:
+      - Drivers
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Profile retrieved
+    """
     try:
         user_id = get_jwt_identity()
         
         with get_db_cursor() as cursor:
             cursor.execute("""
                 SELECT d.driver_id, u.name, u.email, d.license_number, 
-                       d.availability_status, c.vehicle_number, c.vehicle_type
+                       d.availability_status, c.vehicle_number, c.vehicle_type, d.rating, d.total_ratings
                 FROM Drivers d
                 JOIN Users u ON d.user_id = u.user_id
                 LEFT JOIN Cabs c ON d.driver_id = c.driver_id
@@ -169,7 +226,9 @@ def get_driver_profile():
                 "license_number": driver[3],
                 "availability_status": driver[4],
                 "vehicle_number": driver[5],
-                "vehicle_type": driver[6]
+                "vehicle_type": driver[6],
+                "rating": float(driver[7]) if driver[7] else 0.0,
+                "total_ratings": driver[8] if driver[8] else 0
             }
         
         return success_response("Profile retrieved", {"profile": profile})
