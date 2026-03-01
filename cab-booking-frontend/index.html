@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cab Booking System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Cab Booking System</div>
+        <div class="nav-links" id="navLinks">
+            <a href="#" onclick="showPage('login')">Login</a>
+            <a href="#" onclick="showPage('register')">Register</a>
+        </div>
+        <div class="nav-user" id="navUser" style="display:none;">
+            <span id="userName"></span>
+            <span id="ecoScore" style="margin-left: 1rem;"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Login Page -->
+        <div id="loginPage" class="page active">
+            <div class="form-card">
+                <h2>Login</h2>
+                <form onsubmit="login(event)">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                </form>
+                <p>Don't have an account? <a href="#" onclick="showPage('register')">Register</a></p>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="page">
+            <div class="form-card">
+                <h2>Register</h2>
+                <form onsubmit="register(event)">
+                    <input type="text" id="regName" placeholder="Full Name" required>
+                    <input type="email" id="regEmail" placeholder="Email" required>
+                    <input type="password" id="regPassword" placeholder="Password (min 8 characters)" required>
+                    <select id="regRole" onchange="toggleDriverFields()">
+                        <option value="PASSENGER">Passenger</option>
+                        <option value="DRIVER">Driver</option>
+                    </select>
+                    <div id="driverFields" style="display:none;">
+                        <input type="text" id="regLicense" placeholder="License Number (e.g., MH-12-2024-1234567)">
+                        <input type="text" id="regVehicleNumber" placeholder="Vehicle Number (e.g., MH12AB1234)">
+                        <select id="regVehicleType">
+                            <option value="">Select Vehicle Type</option>
+                            <option value="SEDAN">Sedan</option>
+                            <option value="SUV">SUV</option>
+                            <option value="HATCHBACK">Hatchback</option>
+                            <option value="AUTO">Auto Rickshaw</option>
+                        </select>
+                        <label><input type="checkbox" id="regIsElectric"> Electric Vehicle</label>
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+                <p>Already have an account? <a href="#" onclick="showPage('login')">Login</a></p>
+            </div>
+        </div>
+
+        <!-- Passenger Dashboard -->
+        <div id="passengerPage" class="page">
+            <div class="dashboard">
+                <div class="dashboard-header">
+                    <h2>Passenger Dashboard</h2>
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab('book')">Book Ride</button>
+                        <button class="tab" onclick="showTab('history')">My Rides</button>
+                        <button class="tab" onclick="showTab('payments')">Payments</button>
+                    </div>
+                </div>
+
+                <div id="bookTab" class="tab-content active">
+                    <div class="form-card">
+                        <h3>Book a New Ride</h3>
+                        <form onsubmit="requestRide(event)">
+                            <input type="text" id="pickup" placeholder="Pickup Location" required>
+                            <input type="text" id="dropoff" placeholder="Drop Location" required>
+                            <input type="number" id="distance" placeholder="Distance (km)" step="0.1" required oninput="calculateFare()">
+                            <label><input type="checkbox" id="ecoMode" onchange="calculateFare()"> Eco Mode (Discount: Rs.2/km)</label>
+                            <p id="estimatedFare" style="color: #667eea; font-weight: bold; margin: 0.5rem 0;"></p>
+                            <button type="submit">Request Ride</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="historyTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>My Ride History</h3>
+                        <select id="filterStatus" onchange="filterRides()" style="width: auto; padding: 0.5rem;">
+                            <option value="">All Rides</option>
+                            <option value="REQUESTED">Requested</option>
+                            <option value="ACCEPTED">Accepted</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                    </div>
+                    <div id="ridesList"></div>
+                </div>
+
+                <div id="paymentsTab" class="tab-content">
+                    <h3>Payment History</h3>
+                    <div id="paymentsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Driver Dashboard -->
+        <div id="driverPage" class="page">
+            <div class="dashboard">
+                <div class="dashboard-header">
+                    <h2>Driver Dashboard</h2>
+                    <div class="driver-info">
+                        <div class="status-card">
+                            <label>Your Status:</label>
+                            <select id="driverStatus" onchange="updateDriverStatus()">
+                                <option value="AVAILABLE">Available</option>
+                                <option value="BUSY">Busy</option>
+                                <option value="OFFLINE">Offline</option>
+                            </select>
+                        </div>
+                        <div class="info-card" id="vehicleInfo"></div>
+                        <div class="info-card" id="earnings"></div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="showDriverTab('available')">Available Rides</button>
+                    <button class="tab" onclick="showDriverTab('myrides')">My Rides</button>
+                </div>
+
+                <div id="availableTab" class="tab-content active">
+                    <h3>Available Rides to Accept <span style="font-size: 0.8rem; color: #999;">(Auto-refreshes every 10s)</span></h3>
+                    <div id="availableRides"></div>
+                </div>
+
+                <div id="myridesTab" class="tab-content">
+                    <h3>My Accepted Rides</h3>
+                    <div id="driverRidesList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div id="adminPage" class="page">
+            <div class="dashboard">
+                <h2>Admin Dashboard</h2>
+                <div class="tabs">
+                    <button class="tab active" onclick="showAdminTab('stats')">Statistics</button>
+                    <button class="tab" onclick="showAdminTab('users')">Users</button>
+                    <button class="tab" onclick="showAdminTab('rides')">All Rides</button>
+                </div>
+
+                <div id="statsTab" class="tab-content active">
+                    <div id="adminStats"></div>
+                </div>
+
+                <div id="usersTab" class="tab-content">
+                    <h3>All Users</h3>
+                    <div id="adminUsersList"></div>
+                </div>
+
+                <div id="ridesTab" class="tab-content">
+                    <h3>All Rides</h3>
+                    <div id="adminRidesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+    
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRatingModal()">&times;</span>
+            <h3>Rate Your Ride</h3>
+            <div class="stars">
+                <span class="star" onclick="setRating(1)">★</span>
+                <span class="star" onclick="setRating(2)">★</span>
+                <span class="star" onclick="setRating(3)">★</span>
+                <span class="star" onclick="setRating(4)">★</span>
+                <span class="star" onclick="setRating(5)">★</span>
+            </div>
+            <textarea id="ratingComment" placeholder="Add a comment (optional)" rows="3"></textarea>
+            <button onclick="submitRating()">Submit Rating</button>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
