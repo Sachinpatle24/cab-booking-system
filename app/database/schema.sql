@@ -13,6 +13,8 @@ CREATE TABLE Drivers (
     user_id INT UNIQUE,
     license_number NVARCHAR(50) NOT NULL,
     availability_status NVARCHAR(20) DEFAULT 'OFFLINE',
+    rating FLOAT DEFAULT NULL,
+    total_ratings INT DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
@@ -46,5 +48,15 @@ CREATE TABLE Payments (
     amount DECIMAL(10,2),
     payment_status NVARCHAR(20) DEFAULT 'PENDING',
     payment_date DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ride_id) REFERENCES Rides(ride_id)
+);
+
+CREATE TABLE Ratings (
+    rating_id INT PRIMARY KEY IDENTITY(1,1),
+    ride_id INT,
+    passenger_to_driver_rating INT,
+    passenger_comment NVARCHAR(500),
+    driver_to_passenger_rating INT,
+    driver_comment NVARCHAR(500),
     FOREIGN KEY (ride_id) REFERENCES Rides(ride_id)
 );

@@ -7,6 +7,7 @@ from app.exceptions import AppException
 from app.database.db_connection import get_db_connection
 from app.routes.auth_routes import auth_bp
 from app.routes.ride_routes import ride_bp
+from app.routes.driver_routes import driver_bp
 from app.routes.user_routes import user_bp
 from app.routes.payment_routes import payment_bp
 from app.routes.admin_routes import admin_bp
@@ -73,6 +74,7 @@ def create_app(config_name="development"):
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ride_bp, url_prefix="/api/rides")
+    app.register_blueprint(driver_bp, url_prefix="/api/drivers")
     app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(payment_bp, url_prefix="/api/payments")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")

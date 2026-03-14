@@ -1,141 +1,85 @@
-# Cab Booking System
+# Cab Booking System - Backend API
 
-A complete cab booking REST API with eco-friendly features, built with Flask and SQL Server.
+A RESTful backend API for a cab booking platform built with Flask and Microsoft SQL Server. Supports role-based access for Passengers, Drivers, and Admins with JWT authentication, dynamic fare calculation, eco-friendly ride incentives, and a bidirectional rating system.
 
-## Features
+---
 
-- **User Management**: Passenger, Driver, and Admin roles
-- **Ride Booking**: Request, accept, complete, and cancel rides
-- **Real-time Updates**: Auto-refresh for available rides
-- **Eco Mode**: Discounted fares for electric vehicles
-- **Rating System**: Passengers rate drivers and vice versa
-- **Payment Tracking**: Payment history and status
-- **Admin Dashboard**: Statistics, user management, ride monitoring
-- **Driver Earnings**: Track completed rides and total earnings
-- **JWT Authentication**: Secure token-based authentication
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [API Reference](#api-reference)
+- [Database Design](#database-design)
+- [Fare Calculation Logic](#fare-calculation-logic)
+- [Ride Lifecycle](#ride-lifecycle)
+- [Security](#security)
+- [Environment Configuration](#environment-configuration)
+- [Dependencies](#dependencies)
+
+---
+
+## Overview
+
+This project demonstrates backend API development with a focus on clean architecture, relational database design, authentication, role-based authorization, and business logic implementation.
+
+The API serves three user roles — Passenger, Driver, and Admin — each with distinct permissions and capabilities. It also features an eco-scoring system that rewards passengers for choosing environmentally friendly ride options.
+
+---
+
+## Key Features
+
+- User registration and login with JWT-based authentication
+- Role-based access control (Passenger, Driver, Admin)
+- Complete ride lifecycle management (request, accept, complete, cancel)
+- Dynamic fare calculation with eco and electric vehicle discounts
+- Eco score tracking that rewards green ride choices
+- Bidirectional rating system between passengers and drivers
+- Driver availability and earnings management
+- Admin dashboard with platform-wide statistics
+- Payment record tracking for completed rides
+- Interactive Swagger API documentation
+- Structured logging with rotating file handler
+- Environment-based configuration (development, production, testing)
+- CORS support for cross-origin access
+
+---
 
 ## Tech Stack
 
-- **Backend**: Flask (Python)
-- **Database**: Microsoft SQL Server
-- **Authentication**: JWT (JSON Web Tokens)
-- **Frontend**: HTML, CSS, JavaScript (Vanilla)
-- **API Documentation**: Swagger/Flasgger
+| Layer          | Technology                            |
+|----------------|---------------------------------------|
+| Language       | Python 3.8+                           |
+| Framework      | Flask 3.1.3                           |
+| Database       | Microsoft SQL Server (via pyodbc)     |
+| Authentication | JWT (Flask-JWT-Extended)              |
+| API Docs       | Swagger UI (Flasgger)                 |
+| Server         | HTTPS (ad-hoc SSL for development)    |
 
-## Installation
+---
 
-### Prerequisites
-- Python 3.8+
-- SQL Server (with ODBC Driver 17 or 18)
-- pip
+## Architecture
 
-### Setup Steps
+The application follows a layered architecture with clear separation of concerns:
 
-1. **Clone the repository**
-```bash
-cd cab-booking-system
+```
+Routes (API Layer)  -->  Services (Business Logic)  -->  Database (Data Access)
+        |
+   Middlewares (Auth and Role Validation)
+        |
+   Utils (Logging, Validation, Response Formatting)
 ```
 
-2. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
+- **Routes** define API endpoints and handle HTTP request/response
+- **Services** contain all business logic and database operations
+- **Middlewares** enforce authentication and role-based authorization
+- **Utils** provide reusable helpers for logging, input validation, and standardized responses
+- **Config** manages environment-specific settings
 
-3. **Configure database**
-- Update `.env` file with your SQL Server details:
-```
-DB_SERVER=localhost\MSSQLSERVER01
-DB_NAME=CabBookingDB
-DB_DRIVER=ODBC Driver 18 for SQL Server
-SECRET_KEY=your_secret_key_here
-```
-
-4. **Create database**
-- Run the SQL script in `app/database/schema.sql` to create tables
-
-5. **Run the application**
-```bash
-python run.py
-```
-
-Backend runs on: `http://localhost:5000`
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-
-### Rides
-- `POST /api/rides/request` - Request a ride (Passenger)
-- `GET /api/rides/pending` - Get available rides (Driver)
-- `PATCH /api/rides/{id}/accept` - Accept ride (Driver)
-- `PATCH /api/rides/{id}/complete` - Complete ride (Driver)
-- `PATCH /api/rides/{id}/cancel` - Cancel ride (Passenger)
-
-### Drivers
-- `PATCH /api/drivers/status` - Update driver status
-- `GET /api/drivers/rides` - Get driver's rides
-- `GET /api/drivers/earnings` - Get earnings summary
-- `GET /api/drivers/profile` - Get driver profile
-
-### Users
-- `GET /api/users/profile` - Get user profile
-- `GET /api/users/rides` - Get user ride history
-
-### Payments
-- `GET /api/payments/history` - Get payment history
-
-### Admin
-- `GET /api/admin/stats` - Dashboard statistics
-- `GET /api/admin/users` - All users list
-- `GET /api/admin/rides` - All rides list
-
-### Ratings
-- `POST /api/ratings/ride/{id}` - Submit rating
-- `GET /api/ratings/ride/{id}` - Get ride rating
-
-## API Documentation
-
-Access Swagger UI at: `http://localhost:5000/apidocs/`
-
-## Database Schema
-
-### Tables
-- **Users**: User accounts (Passenger, Driver, Admin)
-- **Drivers**: Driver-specific data (license, vehicle, rating)
-- **Cabs**: Vehicle information
-- **Rides**: Ride requests and history
-- **Payments**: Payment records
-- **Ratings**: Ride ratings (passenger ↔ driver)
-
-## Usage
-
-### Using Frontend
-1. Open `cab-booking-frontend/index.html` in browser
-2. Register as Passenger or Driver
-3. Login and use the dashboard
-
-### Using API Directly
-**Example: Login**
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
-```
-
-**Example: Request Ride (with JWT token)**
-```bash
-curl -X POST http://localhost:5000/api/rides/request \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "pickup_location": "Location A",
-    "drop_location": "Location B",
-    "distance": 10.5,
-    "eco_mode_enabled": true
-  }'
-```
+---
 
 ## Project Structure
 
@@ -143,119 +87,266 @@ curl -X POST http://localhost:5000/api/rides/request \
 cab-booking-system/
 ├── app/
 │   ├── database/
-│   │   ├── db_connection.py    # Database connection
-│   │   └── schema.sql          # Database schema
-│   ├── routes/                 # API endpoints
-│   │   ├── auth_routes.py
-│   │   ├── ride_routes.py
-│   │   ├── driver_routes.py
-│   │   ├── user_routes.py
-│   │   ├── payment_routes.py
-│   │   ├── admin_routes.py
-│   │   └── rating_routes.py
-│   ├── services/               # Business logic
-│   │   ├── auth_service.py
-│   │   ├── ride_service.py
-│   │   ├── driver_service.py
-│   │   ├── fare_service.py
-│   │   └── eco_service.py
-│   ├── utils/                  # Helper functions
-│   │   ├── jwt_handler.py
-│   │   ├── response_handler.py
-│   │   ├── validators.py
-│   │   └── logger.py
-│   ├── __init__.py             # Flask app initialization
-│   └── config.py               # Configuration
-├── cab-booking-frontend/       # Frontend files
-│   ├── index.html
-│   ├── app.js
-│   └── style.css
-├── logs/                       # Application logs
-├── .env                        # Environment variables
-├── requirements.txt            # Python dependencies
-├── run.py                      # Application entry point
-└── README.md                   # Documentation
-
+│   │   ├── db_connection.py        # Connection pooling and cursor context manager
+│   │   └── schema.sql              # SQL Server table definitions
+│   ├── middlewares/
+│   │   └── auth_middleware.py       # Role-based access control decorator
+│   ├── routes/
+│   │   ├── auth_routes.py          # Registration and login
+│   │   ├── ride_routes.py          # Ride request, accept, complete, cancel
+│   │   ├── driver_routes.py        # Driver status, rides, earnings, profile
+│   │   ├── user_routes.py          # User profile and ride history
+│   │   ├── payment_routes.py       # Payment status and history
+│   │   ├── admin_routes.py         # Admin statistics, user and ride management
+│   │   └── rating_routes.py        # Submit and retrieve ride ratings
+│   ├── services/
+│   │   ├── auth_service.py         # User registration and login logic
+│   │   ├── ride_service.py         # Ride lifecycle management
+│   │   ├── driver_service.py       # Driver-specific operations
+│   │   ├── user_service.py         # User profile and history queries
+│   │   ├── payment_service.py      # Payment record queries
+│   │   ├── admin_service.py        # Admin dashboard aggregation queries
+│   │   ├── rating_service.py       # Bidirectional rating logic
+│   │   ├── fare_service.py         # Dynamic fare calculation
+│   │   └── eco_service.py          # Eco score calculation and updates
+│   ├── utils/
+│   │   ├── logger.py               # Rotating file logger configuration
+│   │   ├── response_handler.py     # Standardized success/error JSON responses
+│   │   └── validators.py           # Input validation (email, password, role, rating)
+│   ├── __init__.py                 # Flask application factory
+│   ├── config.py                   # Environment-based configuration classes
+│   └── exceptions.py               # Custom exception hierarchy
+├── logs/                           # Application log files (auto-generated)
+├── .env                            # Environment variables (not committed)
+├── .envexample                     # Environment variable template
+├── .gitignore
+├── requirements.txt
+├── run.py                          # Application entry point
+└── README.md
 ```
 
-## Key Features Explained
+---
 
-### Eco Mode
-- Electric vehicles get ₹2/km discount
-- Base fare: ₹50
-- Normal rate: ₹12/km
-- Eco rate: ₹10/km
-- Eco score increases for passengers using eco mode
+## Getting Started
 
-### Ride Flow
-1. Passenger requests ride → Status: REQUESTED
-2. Driver accepts ride → Status: ACCEPTED, Driver: BUSY
-3. Driver completes ride → Status: COMPLETED, Driver: AVAILABLE
-4. Either can cancel → Status: CANCELLED
+### Prerequisites
 
-### Rating System
-- Only completed rides can be rated
-- Passengers rate drivers (1-5 stars)
-- Drivers rate passengers (1-5 stars)
-- Driver average rating auto-calculated
+- Python 3.8 or higher
+- Microsoft SQL Server (with ODBC Driver 17 or 18)
+- pip
 
-### Admin Features
-- View total passengers, drivers, rides
-- Monitor total revenue
-- Track active drivers
-- Manage all users and rides
+### Installation
 
-## Default Admin Account
+1. Clone the repository
+   ```bash
+   git clone <repository-url>
+   cd cab-booking-system
+   ```
 
-After running the database schema, create admin user:
-```sql
-INSERT INTO Users (name, email, password_hash, role, eco_score)
-VALUES ('Admin', 'admin@gmail.com', 'HASHED_PASSWORD', 'ADMIN', 0);
+2. Create and activate a virtual environment
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate          # Windows
+   # source venv/bin/activate     # macOS / Linux
+   ```
+
+3. Install dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure environment variables
+
+   Copy `.envexample` to `.env` and update the values:
+   ```
+   SECRET_KEY=<your-secret-key>
+   DB_SERVER=<your-server-name>
+   DB_NAME=<your-database-name>
+   DB_DRIVER=ODBC Driver 18 for SQL Server
+   ```
+
+5. Set up the database
+
+   Execute `app/database/schema.sql` on your SQL Server instance to create all required tables.
+
+6. Start the server
+   ```bash
+   python run.py
+   ```
+   The API will be available at `https://localhost:8000`.
+
+7. Access API documentation
+
+   Swagger UI is available at `https://localhost:8000/apidocs/`.
+
+---
+
+## API Reference
+
+All endpoints are prefixed with `/api`. Protected routes require a JWT token passed via the `Authorization: Bearer <token>` header.
+
+### Authentication
+
+| Method | Endpoint             | Description       | Access  |
+|--------|----------------------|-------------------|---------|
+| POST   | /api/auth/register   | Register new user | Public  |
+| POST   | /api/auth/login      | Login and get JWT | Public  |
+
+### Rides
+
+| Method | Endpoint                    | Description           | Access    |
+|--------|-----------------------------|-----------------------|-----------|
+| POST   | /api/rides/request          | Request a new ride    | Passenger |
+| GET    | /api/rides/pending          | List pending rides    | Driver    |
+| PATCH  | /api/rides/{id}/accept      | Accept a ride         | Driver    |
+| PATCH  | /api/rides/{id}/complete    | Complete a ride       | Driver    |
+| PATCH  | /api/rides/{id}/cancel      | Cancel a ride         | Passenger |
+
+### Drivers
+
+| Method | Endpoint               | Description             | Access |
+|--------|------------------------|-------------------------|--------|
+| PATCH  | /api/drivers/status    | Update availability     | Driver |
+| GET    | /api/drivers/rides     | Get assigned rides      | Driver |
+| GET    | /api/drivers/earnings  | Get earnings summary    | Driver |
+| GET    | /api/drivers/profile   | Get driver profile      | Driver |
+| GET    | /api/drivers/available | List available drivers  | Public |
+
+### Users
+
+| Method | Endpoint           | Description       | Access        |
+|--------|--------------------|-------------------|---------------|
+| GET    | /api/users/profile | Get user profile  | Authenticated |
+| GET    | /api/users/rides   | Get ride history  | Authenticated |
+
+### Payments
+
+| Method | Endpoint                   | Description             | Access        |
+|--------|----------------------------|-------------------------|---------------|
+| GET    | /api/payments/ride/{id}    | Get payment for a ride  | Authenticated |
+| GET    | /api/payments/history      | Get payment history     | Authenticated |
+
+### Admin
+
+| Method | Endpoint          | Description          | Access |
+|--------|-------------------|----------------------|--------|
+| GET    | /api/admin/stats  | Platform statistics  | Admin  |
+| GET    | /api/admin/users  | List all users       | Admin  |
+| GET    | /api/admin/rides  | List all rides       | Admin  |
+
+### Ratings
+
+| Method | Endpoint                  | Description      | Access        |
+|--------|---------------------------|------------------|---------------|
+| POST   | /api/ratings/ride/{id}    | Submit a rating  | Authenticated |
+| GET    | /api/ratings/ride/{id}    | Get ride ratings | Authenticated |
+
+### Health Check
+
+| Method | Endpoint | Description          | Access |
+|--------|----------|----------------------|--------|
+| GET    | /        | Service status       | Public |
+| GET    | /health  | Health check         | Public |
+
+---
+
+## Database Design
+
+The application uses six relational tables with foreign key constraints:
+
+| Table    | Purpose                                                       |
+|----------|---------------------------------------------------------------|
+| Users    | User accounts with role assignment (Passenger, Driver, Admin) |
+| Drivers  | Driver-specific data: license, availability status, rating    |
+| Cabs     | Vehicle details: number, type, electric vehicle flag          |
+| Rides    | Ride records with status, fare, eco mode, and timestamps      |
+| Payments | Payment records linked to completed rides                     |
+| Ratings  | Bidirectional ratings between passengers and drivers          |
+
+The database connects via Windows Authentication (Trusted Connection) using the pyodbc driver.
+
+---
+
+## Fare Calculation Logic
+
+Fares are calculated dynamically based on distance and ride options:
+
+```
+Fare = (Base Fare + Distance x Per-KM Rate) x Eco Discount x Electric Discount
 ```
 
-Or register through frontend and update role:
-```sql
-UPDATE Users SET role = 'ADMIN' WHERE email = 'your@email.com';
+| Parameter         | Value   |
+|-------------------|---------|
+| Base Fare         | 50      |
+| Per-KM Rate       | 15      |
+| Eco Mode Discount | 10% off |
+| Electric Vehicle  | 5% off  |
+
+Discounts are applied multiplicatively. Passengers also earn eco score points for choosing eco-friendly options:
+- Eco Mode enabled: distance x 2 points
+- Electric vehicle: distance x 3 points
+
+---
+
+## Ride Lifecycle
+
 ```
+REQUESTED  -->  ACCEPTED  -->  COMPLETED
+    |               |
+    v               v
+CANCELLED       CANCELLED
+```
+
+1. Passenger requests a ride. Status is set to REQUESTED and fare is calculated.
+2. An available driver accepts the ride. Status changes to ACCEPTED and the driver is marked as BUSY.
+3. The driver completes the ride. Status changes to COMPLETED, a payment record is created, the driver becomes AVAILABLE, and eco points are awarded.
+4. Either party can cancel a pending or accepted ride. If the ride was accepted, the driver is freed.
+
+Business rules enforced:
+- A passenger cannot have more than one active ride at a time
+- A driver cannot accept a new ride while already on one
+- Only drivers with AVAILABLE status can accept rides
+
+---
 
 ## Security
 
-- Passwords hashed with bcrypt
-- JWT tokens expire after 12 hours
+- Password hashing using bcrypt
+- JWT token-based authentication with configurable expiry
+- Role-based middleware restricting endpoint access by user role
+- Parameterized SQL queries to prevent SQL injection
 - CORS enabled for cross-origin requests
-- SQL injection prevention with parameterized queries
+- HTTPS with self-signed SSL certificate in development
+
+---
+
+## Environment Configuration
+
+The application supports multiple environments controlled by the `FLASK_ENV` variable:
+
+| Environment | Debug Mode | JWT Token Expiry | Database          |
+|-------------|------------|------------------|-------------------|
+| development | Enabled    | 12 hours         | CabBookingDB      |
+| production  | Disabled   | 1 hour           | CabBookingDB      |
+| testing     | Enabled    | 12 hours         | CabBookingDB_Test |
+
+```bash
+set FLASK_ENV=production
+python run.py
+```
+
+---
 
 ## Dependencies
 
-```
-Flask==3.1.3
-Flask-JWT-Extended==4.7.1
-Flask-CORS==5.0.0
-pyodbc==5.3.0
-bcrypt==5.0.0
-python-dotenv==1.2.1
-flasgger==0.9.7.1
-```
+| Package            | Version | Purpose                       |
+|--------------------|---------|-------------------------------|
+| Flask              | 3.1.3   | Web framework                 |
+| Flask-JWT-Extended | 4.7.1   | JWT authentication            |
+| Flask-CORS         | 5.0.0   | Cross-origin resource sharing |
+| pyodbc             | 5.3.0   | SQL Server database driver    |
+| bcrypt             | 5.0.0   | Password hashing              |
+| python-dotenv      | 1.2.1   | Environment variable loading  |
+| flasgger           | 0.9.7.1 | Swagger API documentation     |
+| waitress           | 3.0.2   | Production WSGI server        |
 
-## Troubleshooting
-
-### Database Connection Issues
-- Verify SQL Server is running
-- Check ODBC driver version in `.env`
-- Ensure Windows Authentication or SQL Auth is configured
-
-### CORS Errors
-- Backend must run on `http://localhost:5000`
-- Frontend can run from any origin
-
-### JWT Token Errors
-- Token expires after 12 hours
-- Re-login to get new token
-
-## License
-
-MIT License
-
-## Contact
-
-For issues or questions, please create an issue in the repository.
