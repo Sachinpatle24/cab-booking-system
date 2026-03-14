@@ -27,7 +27,7 @@ def request_ride(user_id, data):
                    VALUES (?, ?, ?, ?, ?, ?, 'REQUESTED')""",
                 (user_id, pickup, drop, distance, fare, eco_mode)
             )
-            cursor.execute("SELECT @@IDENTITY")
+            cursor.execute("SELECT SCOPE_IDENTITY()")
             ride_id = cursor.fetchone()[0]
 
         logger.info(f"Ride requested: {ride_id} by user {user_id}")
@@ -93,7 +93,7 @@ def accept_ride(user_id, ride_id):
         logger.error(f"Accept ride error: {e}")
         return error_response("Failed to accept ride", 500)
 
-def complete_ride(ride_id):
+def complete_ride(user_id, ride_id):
     try:
         with get_db_cursor() as cursor:
             cursor.execute(
@@ -105,10 +105,16 @@ def complete_ride(ride_id):
             if not ride:
                 return error_response("Ride not found", 404)
 
-            user_id, driver_id, distance, eco_mode, fare, status = ride
+            ride_user_id, driver_id, distance, eco_mode, fare, status = ride
 
             if status != 'ACCEPTED':
                 return error_response("Only accepted rides can be completed", 400)
+
+            if driver_id:
+                cursor.execute("SELECT user_id FROM Drivers WHERE driver_id = ?", (driver_id,))
+                driver_user = cursor.fetchone()
+                if not driver_user or driver_user[0] != user_id:
+                    return error_response("Only the assigned driver can complete this ride", 403)
 
             cursor.execute(
                 "UPDATE Rides SET ride_status = 'COMPLETED' WHERE ride_id = ?",
@@ -127,7 +133,7 @@ def complete_ride(ride_id):
 
             eco_points = calculate_eco_points(distance, eco_mode, False)
             if eco_points > 0:
-                update_eco_score(user_id, eco_points)
+                update_eco_score(ride_user_id, eco_points)
 
         logger.info(f"Ride {ride_id} completed")
         return success_response("Ride completed successfully", {

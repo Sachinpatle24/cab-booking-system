@@ -8,3 +8,6 @@ def validate_password(password):
 
 def validate_role(role):
     return role in ['ADMIN', 'DRIVER', 'PASSENGER']
+
+def validate_rating(rating):
+    return isinstance(rating, int) and 1 <= rating <= 5

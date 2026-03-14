@@ -2,23 +2,24 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flasgger import Swagger
-from app.config import Config
+from app.config import config_map
+from app.exceptions import AppException
 from app.database.db_connection import get_db_connection
 from app.routes.auth_routes import auth_bp
 from app.routes.ride_routes import ride_bp
-from app.routes.driver_routes import driver_bp
 from app.routes.user_routes import user_bp
 from app.routes.payment_routes import payment_bp
 from app.routes.admin_routes import admin_bp
 from app.routes.rating_routes import rating_bp
+from app.utils.response_handler import error_response
 from app.utils.logger import setup_logger
 
 jwt = JWTManager()
 logger = setup_logger(__name__)
 
-def create_app():
+def create_app(config_name="development"):
     app = Flask(__name__)
-    app.config.from_object(Config)
+    app.config.from_object(config_map.get(config_name, config_map["development"]))
 
     CORS(app)
     jwt.init_app(app)
@@ -72,11 +73,15 @@ def create_app():
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ride_bp, url_prefix="/api/rides")
-    app.register_blueprint(driver_bp, url_prefix="/api/drivers")
     app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(payment_bp, url_prefix="/api/payments")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(rating_bp, url_prefix="/api/ratings")
+
+    @app.errorhandler(AppException)
+    def handle_app_exception(e):
+        logger.error(f"{e.__class__.__name__}: {e.message}")
+        return error_response(e.message, e.status_code)
 
     @app.route("/")
     def home():

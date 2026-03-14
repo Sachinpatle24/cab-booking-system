@@ -47,7 +47,7 @@ def register_user(data):
             )
             
             # Get the newly created user_id
-            cursor.execute("SELECT @@IDENTITY")
+            cursor.execute("SELECT SCOPE_IDENTITY()")
             user_id = cursor.fetchone()[0]
             
             # If role is DRIVER, create driver and cab records
@@ -59,7 +59,7 @@ def register_user(data):
                 )
                 
                 # Get driver_id
-                cursor.execute("SELECT @@IDENTITY")
+                cursor.execute("SELECT SCOPE_IDENTITY()")
                 driver_id = cursor.fetchone()[0]
                 
                 # Create cab record
